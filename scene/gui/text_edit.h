@@ -155,6 +155,8 @@ private:
 			Color background_color = Color(0, 0, 0, 0);
 			bool hidden = false;
 			int line_count = 0;
+			int wrap_indent_start_index = 0;
+			int wrap_indent_level = 0;
 			int height = 0;
 			int width = 0;
 
@@ -229,6 +231,7 @@ private:
 		int get_line_wrap_amount(int p_line) const;
 
 		Vector<Vector2i> get_line_wrap_ranges(int p_line) const;
+		int get_line_wrap_indent_level(int p_line, int p_wrap_index) const;
 		const Ref<TextParagraph> get_line_data(int p_line) const;
 
 		void set(int p_line, const String &p_text, const Array &p_bidi_override);
@@ -391,15 +394,7 @@ private:
 	Callable tooltip_callback;
 
 	/* Mouse */
-	struct LineDrawingCache {
-		int y_offset = 0;
-		Vector<int> first_visible_chars;
-		Vector<int> last_visible_chars;
-	};
-
-	HashMap<int, LineDrawingCache> line_drawing_cache;
-
-	int _get_char_pos_for_line(int p_px, int p_line, int p_wrap_index = 0) const;
+	int _get_char_pos_for_line(float p_px, int p_line, int p_wrap_index = 0) const;
 
 	/* Caret. */
 	struct Selection {
@@ -456,7 +451,8 @@ private:
 	void _reset_caret_blink_timer();
 	void _toggle_draw_caret();
 
-	int _get_column_x_offset_for_line(int p_char, int p_line, int p_column) const;
+	float _get_line_wrap_indent_size(int p_line, int p_wrap_index) const;
+	float _get_column_x_offset_for_line(int p_char, int p_line, int p_column) const;
 	bool _is_line_col_in_range(int p_line, int p_column, int p_from_line, int p_from_column, int p_to_line, int p_to_column, bool p_include_edges = true) const;
 
 	void _offset_carets_after(int p_old_line, int p_old_column, int p_new_line, int p_new_column, bool p_include_selection_begin = true, bool p_include_selection_end = true);
@@ -506,9 +502,12 @@ private:
 	VScrollBar *v_scroll = nullptr;
 
 	Vector2i content_size_cache;
+	bool content_fits_vertically_on_screen = false;
 	bool fit_content_height = false;
 	bool fit_content_width = false;
 	bool scroll_past_end_of_file_enabled = false;
+
+	float _get_visible_width() const;
 
 	// Smooth scrolling.
 	bool smooth_scroll_enabled = false;
@@ -518,12 +517,16 @@ private:
 	// Scrolling.
 	int first_visible_line = 0;
 	int first_visible_line_wrap_ofs = 0;
-	int first_visible_col = 0;
 
 	bool scrolling = false;
 	bool updating_scrolls = false;
 
+	float _get_first_visible_line_y_offset() const;
+	float _get_first_column_x_offset() const;
+	void _stop_scrolling();
+	void _set_scrolling_to(float p_target_v_scroll);
 	void _update_scrollbars();
+	void _update_scrollbars_visibility();
 	int _get_control_height() const;
 
 	void _v_scroll_input();
@@ -542,21 +545,20 @@ private:
 	bool draw_minimap = false;
 
 	int minimap_width = 80;
-	Point2 minimap_char_size = Point2(1, 2);
-	int minimap_line_spacing = 1;
+	float minimap_line_spacing = 1.0f;
+	Size2 minimap_char_size = Size2(1, 2);
+	Rect2 minimap_viewport_rect;
+
+	Rect2 _get_minimap_sidebar_rect(bool p_rtl) const;
 
 	// Minimap scroll.
 	bool minimap_clicked = false;
-	bool hovering_minimap = false;
+	bool hovering_minimap_sidebar = false;
+	bool hovering_minimap_viewport = false;
 	bool dragging_minimap = false;
-	bool can_drag_minimap = false;
 
-	double minimap_scroll_ratio = 0.0;
-	double minimap_scroll_click_pos = 0.0;
-
-	void _update_minimap_hover();
-	void _update_minimap_click();
-	void _update_minimap_drag();
+	float minimap_drag_initial_v_scroll = 0.0;
+	float minimap_drag_initial_y = 0.0;
 
 	/* Gutters. */
 	Vector<GutterInfo> gutters;
@@ -566,6 +568,7 @@ private:
 
 	void _update_gutter_width();
 	Vector2i _get_hovered_gutter(const Point2 &p_mouse_pos) const;
+	Rect2 _get_gutter_rect(bool p_rtl, bool p_with_padding) const;
 
 	/* Syntax highlighting. */
 	Ref<SyntaxHighlighter> syntax_highlighter;
@@ -614,6 +617,8 @@ private:
 		Color current_line_color = Color(1, 1, 1);
 		Color word_highlighted_color = Color(1, 1, 1);
 	} theme_cache;
+
+	const Ref<StyleBox> &_get_bg_stylebox() const;
 
 	bool window_has_focus = true;
 	bool first_draw = true;
@@ -725,7 +730,7 @@ public:
 	bool alt_input(const Ref<InputEvent> &p_gui_input);
 	virtual Size2 get_minimum_size() const override;
 	virtual bool is_text_field() const override;
-	virtual CursorShape get_cursor_shape(const Point2 &p_pos = Point2i()) const override;
+	virtual CursorShape get_cursor_shape(const Point2 &p_pos) const override;
 	virtual Variant get_drag_data(const Point2 &p_point) override;
 	virtual bool can_drop_data(const Point2 &p_point, const Variant &p_data) const override;
 	virtual void drop_data(const Point2 &p_point, const Variant &p_data) override;
