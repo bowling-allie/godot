@@ -6043,7 +6043,7 @@ void TextEdit::adjust_viewport_to_caret(int p_caret) {
 		set_line_as_last_visible(cur_line, cur_wrap);
 	}
 
-	float visible_width = _get_visible_width() - 20; // Give it a little more space.
+	float visible_width = _get_visible_width() - get_line_height(); // Give it a little more space.
 
 	if (visible_width <= 0) {
 		// Not resized yet.
