@@ -1,3 +1,5 @@
+#debug-only: Runtime read-only assignment checks are disabled in release
+
 func subtest_attribute(state):
 	state.center_of_mass.x -= 1.0
 

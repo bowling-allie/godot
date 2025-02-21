@@ -1,4 +1,5 @@
-#debug-only
+#debug-only: Run-time freed instance checks are disabled in release
+
 func test():
 	var node := Node.new()
 	var inside_tree = node.is_inside_tree

@@ -292,7 +292,10 @@ bool GDScriptTestRunner::make_tests_for_dir(const String &p_dir) {
 					next = dir->get_next();
 					continue;
 				} else {
-					if (script_file->get_line() == "#debug-only") {
+					String first_line = script_file->get_line();
+					if (first_line.begins_with("#debug-only")) {
+						String reason = first_line.trim_prefix("#debug-only").trim_prefix(":").strip_edges();
+						WARN_PRINT(vformat("Skipping debug-only test %s: %s", current_dir.path_join(next).trim_prefix(source_dir), reason));
 						next = dir->get_next();
 						continue;
 					}

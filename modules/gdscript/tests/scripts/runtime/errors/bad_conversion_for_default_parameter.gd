@@ -1,3 +1,5 @@
+#debug-only: Run-time differently typed assign checks are disabled in release
+
 var weakling = 'not float'
 func weak(x: float = weakling):
 	print(x)

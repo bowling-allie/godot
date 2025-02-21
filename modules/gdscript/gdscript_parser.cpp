@@ -1974,7 +1974,6 @@ GDScriptParser::Node *GDScriptParser::parse_statement() {
 			lambda_ended = lambda_ended || has_ended_lambda;
 			result = expression;
 
-#ifdef DEBUG_ENABLED
 			if (expression != nullptr) {
 				switch (expression->type) {
 					case Node::ASSIGNMENT:
@@ -1984,7 +1983,9 @@ GDScriptParser::Node *GDScriptParser::parse_statement() {
 						break;
 					case Node::PRELOAD:
 						// `preload` is a function-like keyword.
+#ifdef DEBUG_ENABLED
 						push_warning(expression, GDScriptWarning::RETURN_VALUE_DISCARDED, "preload");
+#endif
 						break;
 					case Node::LAMBDA:
 						// Standalone lambdas can't be used, so make this an error.
@@ -1992,18 +1993,24 @@ GDScriptParser::Node *GDScriptParser::parse_statement() {
 						break;
 					case Node::LITERAL:
 						// Allow strings as multiline comments.
+#ifdef DEBUG_ENABLED
 						if (static_cast<GDScriptParser::LiteralNode *>(expression)->value.get_type() != Variant::STRING) {
 							push_warning(expression, GDScriptWarning::STANDALONE_EXPRESSION);
 						}
+#endif
 						break;
 					case Node::TERNARY_OPERATOR:
+#ifdef DEBUG_ENABLED
 						push_warning(expression, GDScriptWarning::STANDALONE_TERNARY);
+#endif
 						break;
 					default:
+#ifdef DEBUG_ENABLED
 						push_warning(expression, GDScriptWarning::STANDALONE_EXPRESSION);
+#endif
+						break;
 				}
 			}
-#endif
 			break;
 		}
 	}
@@ -4209,12 +4216,10 @@ bool GDScriptParser::validate_annotation_arguments(AnnotationNode *p_annotation)
 }
 
 bool GDScriptParser::tool_annotation(AnnotationNode *p_annotation, Node *p_target, ClassNode *p_class) {
-#ifdef DEBUG_ENABLED
 	if (_is_tool) {
 		push_error(R"("@tool" annotation can only be used once.)", p_annotation);
 		return false;
 	}
-#endif // DEBUG_ENABLED
 	_is_tool = true;
 	return true;
 }
@@ -4226,7 +4231,6 @@ bool GDScriptParser::icon_annotation(AnnotationNode *p_annotation, Node *p_targe
 	ClassNode *class_node = static_cast<ClassNode *>(p_target);
 	String path = p_annotation->resolved_arguments[0];
 
-#ifdef DEBUG_ENABLED
 	if (!class_node->icon_path.is_empty()) {
 		push_error(R"("@icon" annotation can only be used once.)", p_annotation);
 		return false;
@@ -4235,7 +4239,6 @@ bool GDScriptParser::icon_annotation(AnnotationNode *p_annotation, Node *p_targe
 		push_error(R"("@icon" annotation argument must contain the path to the icon.)", p_annotation->arguments[0]);
 		return false;
 	}
-#endif // DEBUG_ENABLED
 
 	class_node->icon_path = path;
 
@@ -4781,7 +4784,6 @@ bool GDScriptParser::export_custom_annotation(AnnotationNode *p_annotation, Node
 }
 
 bool GDScriptParser::export_tool_button_annotation(AnnotationNode *p_annotation, Node *p_target, ClassNode *p_class) {
-#ifdef TOOLS_ENABLED
 	ERR_FAIL_COND_V_MSG(p_target->type != Node::VARIABLE, false, vformat(R"("%s" annotation can only be applied to variables.)", p_annotation->name));
 	ERR_FAIL_COND_V(p_annotation->resolved_arguments.is_empty(), false);
 
@@ -4821,7 +4823,6 @@ bool GDScriptParser::export_tool_button_annotation(AnnotationNode *p_annotation,
 	variable->export_info.hint = PROPERTY_HINT_TOOL_BUTTON;
 	variable->export_info.hint_string = hint_string;
 	variable->export_info.usage = PROPERTY_USAGE_EDITOR;
-#endif // TOOLS_ENABLED
 
 	return true; // Only available in editor.
 }

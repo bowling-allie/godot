@@ -1,3 +1,5 @@
+#debug-only: Run-time invalid property access checks are disable in release
+
 class Outer:
 	const OUTER_CONST := 0
 	class Inner:

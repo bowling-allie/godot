@@ -1,3 +1,5 @@
+#debug-only: Invalid property assignment checks are disabled in release
+
 # https://github.com/godotengine/godot/issues/90086
 
 class MyObj:

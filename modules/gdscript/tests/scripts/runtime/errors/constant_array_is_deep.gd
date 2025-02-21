@@ -1,3 +1,5 @@
+#debug-only: Runtime read-only assignment checks are disabled in release
+
 const array: Array = [{}]
 
 func test():

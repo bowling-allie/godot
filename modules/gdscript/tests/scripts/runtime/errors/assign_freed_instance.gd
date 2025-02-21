@@ -1,3 +1,5 @@
+#debug-only: Run-time freed instance checks are disabled in release
+
 class A extends Node:
 	pass
 

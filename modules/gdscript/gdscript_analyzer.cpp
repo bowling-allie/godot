@@ -1716,9 +1716,7 @@ void GDScriptAnalyzer::resolve_function_signature(GDScriptParser::FunctionNode *
 	resolving_datatype.kind = GDScriptParser::DataType::RESOLVING;
 	p_function->set_datatype(resolving_datatype);
 
-#ifdef TOOLS_ENABLED
 	int default_value_count = 0;
-#endif // TOOLS_ENABLED
 
 #ifdef DEBUG_ENABLED
 	String function_visible_name = function_name;
@@ -1737,9 +1735,7 @@ void GDScriptAnalyzer::resolve_function_signature(GDScriptParser::FunctionNode *
 #endif // DEBUG_ENABLED
 
 		if (p_function->parameters[i]->initializer) {
-#ifdef TOOLS_ENABLED
 			default_value_count++;
-#endif // TOOLS_ENABLED
 
 			if (p_function->parameters[i]->initializer->is_constant) {
 				p_function->default_arg_values.push_back(p_function->parameters[i]->initializer->reduced_value);
@@ -1784,7 +1780,6 @@ void GDScriptAnalyzer::resolve_function_signature(GDScriptParser::FunctionNode *
 			p_function->set_datatype(return_type);
 		}
 
-#ifdef TOOLS_ENABLED
 		// Check if the function signature matches the parent. If not it's an error since it breaks polymorphism.
 		// Not for the constructor which can vary in signature.
 		GDScriptParser::DataType base_type = parser->current_class->base_type;
@@ -1870,7 +1865,6 @@ void GDScriptAnalyzer::resolve_function_signature(GDScriptParser::FunctionNode *
 			}
 #endif
 		}
-#endif // TOOLS_ENABLED
 	}
 
 #ifdef DEBUG_ENABLED
