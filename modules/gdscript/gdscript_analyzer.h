@@ -56,7 +56,10 @@ class GDScriptAnalyzer {
 	GDScriptParser::LambdaNode *current_lambda = nullptr;
 	List<GDScriptParser::LambdaNode *> pending_body_resolution_lambdas;
 	HashMap<const GDScriptParser::ClassNode *, Ref<GDScriptParserRef>> external_class_parser_cache;
+	Vector<Ref<GDScriptParserRef>> parsers_with_dependent_errors;
 	bool static_context = false;
+
+	void add_parsers_with_dependent_errors(const Ref<GDScriptParserRef> &p_parser_ref);
 
 	// Tests for detecting invalid overloading of script members
 	static _FORCE_INLINE_ bool has_member_name_conflict_in_script_class(const StringName &p_name, const GDScriptParser::ClassNode *p_current_class_node, const GDScriptParser::Node *p_member);
@@ -160,6 +163,7 @@ public:
 	Error resolve_dependencies();
 	Error analyze();
 
+	const Vector<Ref<GDScriptParserRef>> &get_parsers_with_dependent_errors() const { return parsers_with_dependent_errors; }
 	Variant make_variable_default_value(GDScriptParser::VariableNode *p_variable);
 
 	static bool check_type_compatibility(const GDScriptParser::DataType &p_target, const GDScriptParser::DataType &p_source, bool p_allow_implicit_conversion = false, const GDScriptParser::Node *p_source_node = nullptr);

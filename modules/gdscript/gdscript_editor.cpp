@@ -164,11 +164,11 @@ bool GDScriptLanguage::validate(const String &p_script, const String &p_path, Li
 				r_errors->push_back(e);
 			}
 
-			for (KeyValue<String, Ref<GDScriptParserRef>> E : parser.get_depended_parsers()) {
-				GDScriptParser *depended_parser = E.value->get_parser();
+			for (const Ref<GDScriptParserRef> &parser_ref : analyzer.get_parsers_with_dependent_errors()) {
+				GDScriptParser *depended_parser = parser_ref->get_parser();
 				for (const GDScriptParser::ParserError &pe : depended_parser->get_errors()) {
 					ScriptLanguage::ScriptError e;
-					e.path = E.key;
+					e.path = parser_ref->get_path();
 					e.line = pe.line;
 					e.column = pe.column;
 					e.message = pe.message;

@@ -844,6 +844,22 @@ Error GDScript::reload(bool p_keep_state) {
 			_err_print_error("GDScript::reload", path.is_empty() ? "built-in" : (const char *)path.utf8().get_data(), e->get().line, ("Parse Error: " + e->get().message).utf8().get_data(), false, ERR_HANDLER_SCRIPT);
 			e = e->next();
 		}
+
+		if (OS::get_singleton()->is_stdout_verbose()) {
+			for (const Ref<GDScriptParserRef> &parser_ref : analyzer.get_parsers_with_dependent_errors()) {
+				GDScriptParser *depended_parser = parser_ref->get_parser();
+				String depended_script_path = parser_ref->get_path();
+				if (depended_script_path.is_empty()) {
+					depended_script_path = "built-in";
+				}
+				for (const GDScriptParser::ParserError &pe : depended_parser->get_errors()) {
+					_err_print_error("GDScript::reload", depended_script_path.utf8().get_data(), pe.line, vformat("Dependency Parse Error: %s", pe.message, depended_script_path).utf8().get_data(), false, ERR_HANDLER_SCRIPT);
+				}
+			}
+		} else if (!analyzer.get_parsers_with_dependent_errors().is_empty()) {
+			print_line("GDScript: Dependency errors encountered while analyzing, run with --verbose for details.");
+		}
+
 		reloading = false;
 		return ERR_PARSE_ERROR;
 	}
@@ -855,6 +871,22 @@ Error GDScript::reload(bool p_keep_state) {
 
 	if (err) {
 		_err_print_error("GDScript::reload", path.is_empty() ? "built-in" : (const char *)path.utf8().get_data(), compiler.get_error_line(), ("Compile Error: " + compiler.get_error()).utf8().get_data(), false, ERR_HANDLER_SCRIPT);
+
+		if (OS::get_singleton()->is_stdout_verbose()) {
+			for (KeyValue<String, Ref<GDScriptParserRef>> E : parser.get_depended_parsers()) {
+				GDScriptParser *depended_parser = E.value->get_parser();
+				String depended_script_path = E.key;
+				if (depended_script_path.is_empty()) {
+					depended_script_path = "built-in";
+				}
+				for (const GDScriptParser::ParserError &pe : depended_parser->get_errors()) {
+					_err_print_error("GDScript::reload", depended_script_path.utf8().get_data(), pe.line, vformat("Dependency Parse Error: %s", pe.message, depended_script_path).utf8().get_data(), false, ERR_HANDLER_SCRIPT);
+				}
+			}
+		} else if (valid) {
+			print_line("GDScript: Dependency errors encountered while compiling, run with --verbose for details.");
+		}
+
 		if (can_run) {
 			if (EngineDebugger::is_active()) {
 				GDScriptLanguage::get_singleton()->debug_break_parse(_get_debug_path(), compiler.get_error_line(), "Parser Error: " + compiler.get_error());

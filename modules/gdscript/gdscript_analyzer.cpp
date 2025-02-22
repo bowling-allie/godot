@@ -341,6 +341,18 @@ void GDScriptAnalyzer::get_class_node_current_scope_classes(GDScriptParser::Clas
 	}
 }
 
+void GDScriptAnalyzer::add_parsers_with_dependent_errors(const Ref<GDScriptParserRef> &p_parser_ref) {
+	if (parsers_with_dependent_errors.has(p_parser_ref) || p_parser_ref->get_analyzer() == this) {
+		return;
+	}
+
+	parsers_with_dependent_errors.push_back(p_parser_ref);
+
+	for (const Ref<GDScriptParserRef> &other_parser_ref : p_parser_ref->get_analyzer()->get_parsers_with_dependent_errors()) {
+		add_parsers_with_dependent_errors(other_parser_ref);
+	}
+}
+
 Error GDScriptAnalyzer::resolve_class_inheritance(GDScriptParser::ClassNode *p_class, const GDScriptParser::Node *p_source) {
 	if (p_source == nullptr && parser->has_class(p_class)) {
 		p_source = p_class;
@@ -381,6 +393,7 @@ Error GDScriptAnalyzer::resolve_class_inheritance(GDScriptParser::ClassNode *p_c
 		int error_count = other_parser->errors.size();
 		other_analyzer->resolve_class_inheritance(p_class);
 		if (other_parser->errors.size() > error_count) {
+			add_parsers_with_dependent_errors(parser_ref);
 			push_error(vformat(R"(Could not resolve inheritance for class "%s".)", p_class->fqcn), p_source);
 			return ERR_PARSE_ERROR;
 		}
@@ -1014,6 +1027,7 @@ void GDScriptAnalyzer::resolve_class_member(GDScriptParser::ClassNode *p_class, 
 		int error_count = other_parser->errors.size();
 		other_analyzer->resolve_class_member(p_class, p_index);
 		if (other_parser->errors.size() > error_count) {
+			add_parsers_with_dependent_errors(parser_ref);
 			push_error(vformat(R"(Could not resolve external class member "%s".)", member.get_name()), p_source);
 			return;
 		}
@@ -1288,6 +1302,7 @@ void GDScriptAnalyzer::resolve_class_interface(GDScriptParser::ClassNode *p_clas
 			int error_count = other_parser->errors.size();
 			other_analyzer->resolve_class_interface(p_class);
 			if (other_parser->errors.size() > error_count) {
+				add_parsers_with_dependent_errors(parser_ref);
 				push_error(vformat(R"(Could not resolve class "%s".)", p_class->fqcn), p_source);
 				return;
 			}
@@ -1377,6 +1392,7 @@ void GDScriptAnalyzer::resolve_class_body(GDScriptParser::ClassNode *p_class, co
 		int error_count = other_parser->errors.size();
 		other_analyzer->resolve_class_body(p_class);
 		if (other_parser->errors.size() > error_count) {
+			add_parsers_with_dependent_errors(parser_ref);
 			push_error(vformat(R"(Could not resolve class "%s".)", p_class->fqcn), p_source);
 			return;
 		}
